@@ -1,4 +1,9 @@
 .rcorners1 {
     border-radius: 25px;
     border: 2px solid #73AD21;
+    
+  }
+
+  .cardImgStyle {
+    border-bottom: 4px dotted rgb(136, 243, 193);
   }

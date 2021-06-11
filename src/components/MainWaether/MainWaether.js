@@ -1,45 +1,58 @@
 import React,{useEffect, useState} from 'react'
 import axios from 'axios';
-import { Button , Container, Row, Col,Navbar,FormControl ,Nav, Form} from 'react-bootstrap';
+import { Button , Container, Row, Col,Navbar,FormControl ,Nav, Form, Jumbotron} from 'react-bootstrap';
 import LocNavBar from '../Navbar/LocNavBar';
 import Weather from '../Weather/Weather';
 const MainWaether = () => {
 
-  
+  //store latitude and longitude
     const [location, setLocation] = useState({
-        coordinates: {lat:"", lng:""}
+        coordinates: {lat:0, lng:0}
      });
-     const [toggleSearchType, setToggleSearchType] = useState(false);
+     
+    //store the city name
      const [city, setCity] = useState("");
-    
+     
+     //boolean if false shows a welcome message, it true shows weather data
      const [showWeatherdata, setShowWeatherdata] = useState(false);
      
-      let baseURL;
-      let cityURL;
-    const apiKey = '5b481ccb86273b4726145e5371a6107c';
+      
 
      // get and store the 7 day forcast
      const[userWeather, serUserWeather] = useState("name");
 
+let baseURL;
+      let cityURL;
+    const apiKey = '5b481ccb86273b4726145e5371a6107c';
+
+
+//get the wether of the location the user inputed 
     const fecthWeather = async () => {
-       // console.log(location.coordinates.lng);
-      
-     
-        
+
 baseURL = ` https://api.openweathermap.org/data/2.5/onecall?lat=${location.coordinates.lat}&lon=${location.coordinates.lng}&units=imperial&exclude=hourly,minutely,&appid=`
-
-        
-
+  
+cityURL = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
         
 
       try {
-          const weatherData = await axios.get(baseURL + apiKey);
-          serUserWeather(weatherData.data.daily);
          
-        // console.log("---", weatherData.data);
-        
-         getCityName()
-          setShowWeatherdata(true);
+          const weatherData = await axios.get(baseURL + apiKey)
+          .then( function (res) {
+
+             serUserWeather(res.data.daily);
+         
+            console.log("---", res.data);
+            
+            // getCityName()
+              setShowWeatherdata(true);
+          }
+
+
+
+           
+          )
+          
+         
         
       } catch (error) {
           console.log(error);
@@ -48,21 +61,9 @@ baseURL = ` https://api.openweathermap.org/data/2.5/onecall?lat=${location.coord
 
 
 
-    const getCityName = async () => {
+   
 
-      let cityURL = `https://us1.locationiq.com/v1/reverse.php?key=pk.98d1b7e7e8809bf457dc2448d824c3fb&lat=${location.coordinates.lat}&lon==${location.coordinates.lng}&format=json`
-      //console.log("----",cityURL);
-      try {
-        const cityData = await axios.get(cityURL)
-        setCity(cityData.data.address.city);
-       
-      console.log("---", cityData.data.address.city);
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-
+//get latitude and longitude from user's location
     const onSuccess = (location) => {
         setLocation({
             coordinates: {
@@ -72,7 +73,7 @@ baseURL = ` https://api.openweathermap.org/data/2.5/onecall?lat=${location.coord
         })
 
        
-        fecthWeather();
+        //fecthWeather();
     };
 
     const onError = (error) => {
@@ -81,117 +82,98 @@ baseURL = ` https://api.openweathermap.org/data/2.5/onecall?lat=${location.coord
 
 
 
+
+
 /*
-
+Open open weather api requires latitude and longitude
+used this api call to reverse geocoding the city by its name
 */
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-    cityURL = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
+const fecthCityName = async () => {
 
-    try {
-      const cityLat = await axios.get(cityURL);
+  
+  cityURL = `http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=1&appid=${apiKey}`;
+  const cityLat = await axios.get(cityURL)
+  .then(function (res) {
+    console.log("lat ",res.data[0].lat)
+    console.log("lon ",res.data[0].lon)
 
-     setLocation({
+    console.log("this is the hook", location);
+
+    //set latitude and longitude 
+    setLocation({
       coordinates: {
-        lat: cityLat.data[0].lat,
-        lng: cityLat.data[0].lon,
+        lat: res.data[0].lat,
+        lng: res.data[0].lon,
     },
      })
-     
-     setCity(cityLat.data[0].name);
-     console.log(cityLat.data[0].name);
-     
+
+     console.log("this is the hook", location);
+
+     //call to get 7 day forcast
      fecthWeather();
-     
-  } catch (error) {
-      console.log(error);
   }
+  
+  )
+    
+  
+ 
+
+ 
+
+}
+//handle the button sumbitting
+    const handleSubmit =  (e) => {
+
+      e.preventDefault();
+     
+  fecthCityName ();
+   
 }
 
     
 
    
 
-    const getUserLocation =  (e) => {
+    const getUserLocation =  () => {
 
-        e.preventDefault();
+        
      
-        navigator.geolocation.getCurrentPosition(onSuccess, onError);
+       
 
       navigator.geolocation.getCurrentPosition(onSuccess, onError);
     }
 
 useEffect(() => {
-  //solves an error i have no idea how to fix
-  navigator.geolocation.getCurrentPosition(onSuccess2, onError2);
+  //used this to solve bug i have no idea how to fix
+  getUserLocation()
 },[])
-
-const onSuccess2 = (location) => {
-  
-
- 
-  fecthWeather();
-};
-
-const onError2 = (error) => {
-  {console.log(error)}
-}
 
 
     return (
 
         <>
 <Navbar inline bg="dark" variant="dark">
-    <Navbar.Brand href="#home">Navbar</Navbar.Brand>
+    <Navbar.Brand>Weather</Navbar.Brand>
     <Nav className="mr-auto">
       
     </Nav>
     <Form inline className='d-flex'  onSubmit={handleSubmit}>
-      <FormControl placeholder="Enter City" value={city} onChange={(e) => setCity(e.target.value) }/>
+      <FormControl type="text"
+       placeholder="Enter City" 
+      value={city} 
+      onChange={e => setCity(e.target.value)} />
       <Button  type="submit" >Submit</Button>
-      <Button onClick={getUserLocation} type="submit">Location</Button>
     </Form>
   </Navbar>
 
-      {/* <Navbar bg="dark" variant="dark">
-    <Navbar.Brand href="#home">
-      <img
-        alt=""
-        src="/logo.svg"
-        width="30"
-        height="30"
-        className="d-inline-block align-top"
-      />{' '}
-      React Bootstrap
-    </Navbar.Brand>
-
-
-
-    <Form  inline onSubmit={handleSubmit}>
-     
-      <Form.Group controlId="formCity">
- 
-   
-      <Form.Control placeholder="Enter City" value={city} onChange={(e) => setCity(e.target.value) } />
-   
-   
-    <Button  type="submit" >Submit</Button>
-   
-   
   
-  </Form.Group> 
-  <Button onClick={getUserLocation} type="submit">Location</Button>
-  
-  
-</Form>
 
 
-  </Navbar>  */}
-
-
-        <div>
+        <Container>
+          <Row className="justify-content-center" style={{textAlign: "center"}}>
           <h1>{city}</h1>
-        </div>
+          </Row>
+        </Container>
         
             <Container fluid="md">
 
@@ -200,7 +182,16 @@ const onError2 = (error) => {
         
        {showWeatherdata ? 
       userWeather.map(index =>(  <Col m={4}> 
-        <Weather key={index.dt} weatherData={index}  /> </Col>)) : <h1>Sign in</h1>    }
+        <Weather key={index.dt} weatherData={index}  /> </Col>)) :
+        
+        
+        <Jumbotron fluid className="text-center">
+  <h1>Welcome</h1>
+  <p>
+    Pleace enter your city to get weather information 
+  </p>
+  
+</Jumbotron>    }
         
      
        
